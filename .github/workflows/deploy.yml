@@ -1,32 +1,52 @@
-name: Deploy docusaurus website
+name: Deploy Docusaurus Website
 
 on:
   push:
     branches:
       - main
 
+# Define the permissions needed for GitHub Pages deployment.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Download code from GitHub
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Install pnpm package manager
-        uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # v4.0.0
+      - name: Set up pnpm package manager
+        uses: pnpm/action-setup@v4
 
-      - name: Set up Node.js version
-        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: pnpm
 
-      - name: Install dependencies specified in package.json
-        run: |
-          pnpm install --frozen-lockfile
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-      - name: Deploy the website
-        run: |
-          pnpm docusaurus build
-          pnpm docusaurus deploy --skip-build
+      - name: Build website
+        env:
+          BASE_URL: "/website/"
+        run: pnpm run --if-present build
+
+      - name: Upload build artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: github-pages
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deploy-pages
+        uses: actions/deploy-pages@v4

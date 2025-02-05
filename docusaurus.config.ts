@@ -12,6 +12,7 @@ const config: Config = {
   organizationName: 'bddjong',
   projectName: 'website',
   trailingSlash: true,
+  deploymentBranch: 'gh-pages',
 
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
